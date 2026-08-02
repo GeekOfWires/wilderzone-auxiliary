@@ -1,7 +1,7 @@
 {
-  "name": "tribes-proxy-check",
+  "name": "wilderzone-auxiliary",
   "version": "1.0.0",
-  "description": "VPN/proxy detection API for Tribes 2 game servers, with an admin panel. Cloudflare Worker + D1 + KV.",
+  "description": "Wilderzone Auxiliary - auxiliary services for Wilderzone (Tribes 2) game servers: VPN/proxy detection with a web admin panel, and more to come. Cloudflare Worker + D1 + KV.",
   "author": "GeekOfWires <GeekOfWires@users.noreply.github.com>",
   "license": "MIT",
   "private": true,
@@ -11,8 +11,8 @@
     "deploy": "npm run build:app && wrangler deploy",
     "build:app": "npm --prefix app run build",
     "typecheck": "tsc --noEmit",
-    "db:migrate:local": "wrangler d1 execute tribes-proxy-check-db --local --file=migrations/0001_init.sql",
-    "db:migrate": "wrangler d1 execute tribes-proxy-check-db --remote --file=migrations/0001_init.sql"
+    "db:migrate:local": "wrangler d1 execute wilderzone-aux-db --local --file=migrations/0001_init.sql",
+    "db:migrate": "wrangler d1 execute wilderzone-aux-db --remote --file=migrations/0001_init.sql"
   },
   "dependencies": {
     "hono": "^4.6.14"

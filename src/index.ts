@@ -65,20 +65,41 @@ async function getSession(c: { req: { raw: Request }; env: Env }): Promise<Sessi
 
 async function getAdminBearerKey(c: { req: { raw: Request }; env: Env }): Promise<ApiKeyRow | null> {
   const header = c.req.raw.headers.get("Authorization") ?? "";
-  const m = /^Bearer\s+(tpc_[A-Za-z0-9]+)$/.exec(header.trim());
+  const m = /^Bearer\s+((?:tpc_|wza_)[A-Za-z0-9]+)$/.exec(header.trim());
   if (!m) return null;
   return c.env.DB.prepare("SELECT * FROM api_keys WHERE key = ? AND role = 'admin' AND revoked_at IS NULL")
     .bind(m[1])
     .first<ApiKeyRow>();
 }
 
-// /api/* guard: session cookie OR (for key routes) admin bearer key
-async function requireAdmin(c: any): Promise<Response | null> {
+// Guards. Session roles: root > admin > standard.
+// - requireUser:       any logged-in user
+// - requireAdminRole:  admin or root session, OR an admin-role Bearer API key
+//                      (machine-to-machine)
+// - requireRoot:       root session only (user management)
+function isAdminRole(role: string): boolean {
+  return role === "admin" || role === "root";
+}
+
+async function requireUser(c: any): Promise<Response | null> {
   const session = await getSession(c);
-  if (session) return null;
+  if (!session) return c.json({ error: "unauthorized" }, 401);
+  return null;
+}
+
+async function requireAdminRole(c: any): Promise<Response | null> {
+  const session = await getSession(c);
+  if (session && isAdminRole(session.role)) return null;
   const bearer = await getAdminBearerKey(c);
   if (bearer) return null;
-  return c.json({ error: "unauthorized" }, 401);
+  return c.json({ error: "forbidden" }, 403);
+}
+
+async function requireRoot(c: any): Promise<Response | null> {
+  const session = await getSession(c);
+  if (!session) return c.json({ error: "unauthorized" }, 401);
+  if (session.role !== "root") return c.json({ error: "forbidden" }, 403);
+  return null;
 }
 
 function sanitizeField(s: string): string {
@@ -299,15 +320,15 @@ app.post("/api/auth/logout", (c) => {
 app.get("/api/auth/me", async (c) => {
   const session = await getSession(c);
   if (!session) return jsonErr(c, "unauthorized", 401);
-  const user = await c.env.DB.prepare("SELECT username, must_change_password FROM users WHERE username = ?")
+  const user = await c.env.DB.prepare("SELECT username, role, must_change_password FROM users WHERE username = ?")
     .bind(session.sub)
-    .first<{ username: string; must_change_password: number }>();
+    .first<{ username: string; role: string; must_change_password: number }>();
   if (!user) return jsonErr(c, "unauthorized", 401);
-  return c.json({ username: user.username, mustChangePassword: user.must_change_password === 1 });
+  return c.json({ username: user.username, role: user.role, mustChangePassword: user.must_change_password === 1 });
 });
 
 app.post("/api/auth/password", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireUser(c);
   if (denied) return denied;
 
   let body: { currentPassword?: string; newPassword?: string };
@@ -342,7 +363,7 @@ app.post("/api/auth/password", async (c) => {
 // ---- setup (first-run wizard) ----
 
 app.get("/api/setup/status", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   const user = await c.env.DB.prepare("SELECT must_change_password FROM users WHERE username = 'root'")
@@ -362,7 +383,7 @@ app.get("/api/setup/status", async (c) => {
 });
 
 app.post("/api/setup/seed-vpn", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   let source = await c.env.DB.prepare("SELECT id FROM sources WHERE url = ?").bind(X4BNET_VPN_URL).first<{ id: number }>();
@@ -386,14 +407,14 @@ app.post("/api/setup/seed-vpn", async (c) => {
 // ---- sources CRUD ----
 
 app.get("/api/sources", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireUser(c);
   if (denied) return denied;
   const rows = await c.env.DB.prepare("SELECT * FROM sources ORDER BY id").all<SourceRow>();
   return c.json({ sources: rows.results });
 });
 
 app.post("/api/sources", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   let body: { name?: string; url?: string; format?: SourceFormat; enabled?: boolean };
@@ -412,7 +433,7 @@ app.post("/api/sources", async (c) => {
 });
 
 app.put("/api/sources/:id", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   const id = Number(c.req.param("id"));
@@ -442,7 +463,7 @@ app.put("/api/sources/:id", async (c) => {
 });
 
 app.delete("/api/sources/:id", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   const id = Number(c.req.param("id"));
@@ -453,7 +474,7 @@ app.delete("/api/sources/:id", async (c) => {
 });
 
 app.post("/api/sources/:id/refresh", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   const result = await refreshSource(c.env, Number(c.req.param("id")));
@@ -462,7 +483,7 @@ app.post("/api/sources/:id/refresh", async (c) => {
 });
 
 app.get("/api/sources/:id/entries", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireUser(c);
   if (denied) return denied;
 
   const id = Number(c.req.param("id"));
@@ -487,8 +508,19 @@ app.get("/api/sources/:id/entries", async (c) => {
 // ---- API keys ----
 
 app.get("/api/keys", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireUser(c);
   if (denied) return denied;
+
+  const session = await getSession(c);
+  // standard users see only public keys - the public key is rate-limited by
+  // the service, so there is no harm in every user viewing it
+  if (session && !isAdminRole(session.role)) {
+    const rows = await c.env.DB.prepare(
+      "SELECT id, key, name, role, rate_limit, rate_window_s, created_by, created_at, revoked_at, last_used_at FROM api_keys WHERE role = 'public' AND revoked_at IS NULL ORDER BY id"
+    ).all<ApiKeyRow>();
+    return c.json({ keys: rows.results });
+  }
+
   const rows = await c.env.DB.prepare(
     "SELECT id, key, name, role, rate_limit, rate_window_s, created_by, created_at, revoked_at, last_used_at FROM api_keys ORDER BY id"
   ).all<ApiKeyRow>();
@@ -496,7 +528,7 @@ app.get("/api/keys", async (c) => {
 });
 
 app.post("/api/keys", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   let body: { name?: string; role?: string; rateLimit?: number | null; rateWindowS?: number };
@@ -521,7 +553,7 @@ app.post("/api/keys", async (c) => {
 });
 
 app.put("/api/keys/:id", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   const id = Number(c.req.param("id"));
@@ -547,7 +579,7 @@ app.put("/api/keys/:id", async (c) => {
 });
 
 app.delete("/api/keys/:id", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   const id = Number(c.req.param("id"));
@@ -555,10 +587,179 @@ app.delete("/api/keys/:id", async (c) => {
   return c.json({ ok: true });
 });
 
+// ---- user management (root only) ----
+
+app.get("/api/users", async (c) => {
+  const denied = await requireRoot(c);
+  if (denied) return denied;
+  const rows = await c.env.DB.prepare(
+    "SELECT id, username, role, must_change_password, created_at FROM users ORDER BY id"
+  ).all();
+  return c.json({ users: rows.results });
+});
+
+app.post("/api/users", async (c) => {
+  const denied = await requireRoot(c);
+  if (denied) return denied;
+
+  let body: { username?: string; password?: string; role?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return jsonErr(c, "invalid json");
+  }
+  if (!body.username || !/^[A-Za-z0-9_.-]{2,32}$/.test(body.username)) {
+    return jsonErr(c, "username must be 2-32 chars of letters, numbers, _ . -");
+  }
+  if (!body.password || body.password.length < 8) {
+    return jsonErr(c, "password must be at least 8 characters");
+  }
+  const role = body.role ?? "standard";
+  if (!["admin", "standard"].includes(role)) {
+    return jsonErr(c, "role must be admin or standard");
+  }
+
+  const existing = await c.env.DB.prepare("SELECT id FROM users WHERE username = ?").bind(body.username).first();
+  if (existing) return jsonErr(c, "username already taken", 409);
+
+  const { hash, salt } = await hashPassword(body.password);
+  await c.env.DB.prepare(
+    "INSERT INTO users (username, pass_hash, salt, role, must_change_password) VALUES (?, ?, ?, ?, 1)"
+  )
+    .bind(body.username, hash, salt, role)
+    .run();
+  return c.json({ ok: true, username: body.username, role });
+});
+
+app.delete("/api/users/:id", async (c) => {
+  const denied = await requireRoot(c);
+  if (denied) return denied;
+
+  const id = Number(c.req.param("id"));
+  const user = await c.env.DB.prepare("SELECT username, role FROM users WHERE id = ?").bind(id)
+    .first<{ username: string; role: string }>();
+  if (!user) return jsonErr(c, "not found", 404);
+  if (user.role === "root") return jsonErr(c, "the root account cannot be removed", 403);
+
+  const session = await getSession(c);
+  if (session && session.sub === user.username) {
+    return jsonErr(c, "you cannot remove your own account", 403);
+  }
+
+  await c.env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id).run();
+  return c.json({ ok: true });
+});
+
+// ---- API key requests (standard requests, admins/root approve or deny) ----
+
+app.post("/api/keys/requests", async (c) => {
+  const denied = await requireUser(c);
+  if (denied) return denied;
+
+  let body: { name?: string; note?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return jsonErr(c, "invalid json");
+  }
+  if (!body.name) return jsonErr(c, "name required");
+
+  const session = await getSession(c);
+  await c.env.DB.prepare(
+    "INSERT INTO key_requests (name, role, requested_by, note) VALUES (?, 'server', ?, ?)"
+  )
+    .bind(body.name, session?.sub ?? "unknown", body.note ?? null)
+    .run();
+  return c.json({ ok: true });
+});
+
+// the requester's own requests (approved ones reveal the minted key)
+app.get("/api/keys/requests/mine", async (c) => {
+  const denied = await requireUser(c);
+  if (denied) return denied;
+
+  const session = await getSession(c);
+  const rows = await c.env.DB.prepare(
+    "SELECT id, name, role, status, note, granted_key, created_at, reviewed_by, reviewed_at FROM key_requests WHERE requested_by = ? ORDER BY id DESC"
+  )
+    .bind(session?.sub ?? "")
+    .all();
+  return c.json({ requests: rows.results });
+});
+
+// admins/root: all requests (?status=pending to filter)
+app.get("/api/keys/requests", async (c) => {
+  const denied = await requireAdminRole(c);
+  if (denied) return denied;
+
+  const status = c.req.query("status") ?? "";
+  const rows = status
+    ? await c.env.DB.prepare(
+        "SELECT id, name, role, requested_by, status, note, created_at, reviewed_by, reviewed_at FROM key_requests WHERE status = ? ORDER BY id DESC"
+      ).bind(status).all()
+    : await c.env.DB.prepare(
+        "SELECT id, name, role, requested_by, status, note, created_at, reviewed_by, reviewed_at FROM key_requests ORDER BY id DESC"
+      ).all();
+  return c.json({ requests: rows.results });
+});
+
+app.post("/api/keys/requests/:id/approve", async (c) => {
+  const denied = await requireAdminRole(c);
+  if (denied) return denied;
+
+  const id = Number(c.req.param("id"));
+  const request = await c.env.DB.prepare("SELECT * FROM key_requests WHERE id = ?").bind(id)
+    .first<{ id: number; name: string; role: string; status: string }>();
+  if (!request) return jsonErr(c, "not found", 404);
+  if (request.status !== "pending") return jsonErr(c, "request already reviewed", 409);
+
+  const key = generateApiKey();
+  const session = await getSession(c);
+  const reviewer = session?.sub ?? "admin-key";
+
+  await c.env.DB.prepare("INSERT INTO api_keys (key, name, role, created_by) VALUES (?, ?, ?, ?)")
+    .bind(key, request.name, request.role, reviewer)
+    .run();
+  await c.env.DB.prepare(
+    "UPDATE key_requests SET status = 'approved', granted_key = ?, reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ?"
+  )
+    .bind(key, reviewer, id)
+    .run();
+
+  // the full key is shown once here, and remains visible to the requester
+  return c.json({ ok: true, key, name: request.name, role: request.role });
+});
+
+app.post("/api/keys/requests/:id/deny", async (c) => {
+  const denied = await requireAdminRole(c);
+  if (denied) return denied;
+
+  const id = Number(c.req.param("id"));
+  let body: { note?: string } = {};
+  try {
+    body = await c.req.json();
+  } catch {
+    // note is optional
+  }
+
+  const request = await c.env.DB.prepare("SELECT status FROM key_requests WHERE id = ?").bind(id)
+    .first<{ status: string }>();
+  if (!request) return jsonErr(c, "not found", 404);
+  if (request.status !== "pending") return jsonErr(c, "request already reviewed", 409);
+
+  const session = await getSession(c);
+  await c.env.DB.prepare(
+    "UPDATE key_requests SET status = 'denied', note = COALESCE(?, note), reviewed_by = ?, reviewed_at = datetime('now') WHERE id = ?"
+  )
+    .bind(body.note ?? null, session?.sub ?? "admin-key", id)
+    .run();
+  return c.json({ ok: true });
+});
+
 // ---- query log ----
 
 app.get("/api/logs", async (c) => {
-  const denied = await requireAdmin(c);
+  const denied = await requireAdminRole(c);
   if (denied) return denied;
 
   const flaggedOnly = c.req.query("flagged") === "1";

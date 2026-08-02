@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 export type Theme = "light" | "dark" | "system";
 
-const STORAGE_KEY = "tpc-admin-theme";
+const STORAGE_KEY = "wz-aux-theme";
 
 interface ThemeProviderState {
   theme: Theme;

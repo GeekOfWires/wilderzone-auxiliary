@@ -1,9 +1,9 @@
-title: tribes-proxy-check
+title: Wilderzone Auxiliary
 description: >-
   VPN/proxy detection API for Tribes 2 game servers, with a web admin panel.
   Cloudflare Worker + D1 + KV.
 url: "https://geekofwires.github.io"
-baseurl: "/tribes-proxy-check"
+baseurl: "/wilderzone-auxiliary"
 
 # GitHub Pages builds this folder with Jekyll; just-the-docs gives us nav,
 # search, and a custom color scheme hook.
@@ -16,7 +16,7 @@ heading_anchors: true
 # Top-right auxiliary links
 aux_links:
   "View on GitHub":
-    - "https://github.com/GeekOfWires/tribes-proxy-check"
+    - "https://github.com/GeekOfWires/wilderzone-auxiliary"
   "Play Tribes 2":
     - "https://playt2.com"
 

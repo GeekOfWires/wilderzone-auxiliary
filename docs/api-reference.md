@@ -107,16 +107,24 @@ routes additionally accept `Authorization: Bearer tpc_<admin-role-key>`.
 
 | role | purpose | rate limit |
 |---|---|---|
-| `public` | casual use; default `tpc_public` seeded | 20/hour **per requesting IP** |
+| `public` | casual use; default `tpc_public` seeded, **viewable by all panel users** | 20/hour **per requesting IP** |
 | `server` | game servers (`X-Tribes-Key`) | unlimited by default |
 | `admin` | machine-to-machine key minting | n/a |
 
 | route | notes |
 |---|---|
-| `GET /api/keys` | list (revoked keys shown dimmed) |
-| `POST /api/keys` | `{name, role, rateLimit?, rateWindowS?}` — **full key returned once** |
-| `PUT /api/keys/:id` | rename / change rate (`rateLimit: null` = unlimited) |
-| `DELETE /api/keys/:id` | revoke |
+| `GET /api/keys` | list — `standard` users see only public keys |
+| `POST /api/keys` | admin/root: `{name, role, rateLimit?, rateWindowS?}` — **full key returned once** |
+| `PUT /api/keys/:id` | admin/root: rename / change rate (`rateLimit: null` = unlimited) |
+| `DELETE /api/keys/:id` | admin/root: revoke |
+
+### Panel user roles
+
+- **standard** — view Sources and Entries, view the public key, request API keys
+- **admin** — standard + Query Log, create/revoke keys, approve/deny key requests
+- **root** — admin + user management (`GET/POST/DELETE /api/users`)
+
+Key-request routes: `POST /api/keys/requests` `{name, note?}`, `GET /api/keys/requests/mine`, `GET /api/keys/requests?status=pending`, `POST /api/keys/requests/:id/approve|deny` (admin/root).
 
 ### Query log
 

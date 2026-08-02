@@ -22,7 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api, errorMessage } from "@/lib/api";
+import { api, errorMessage, toastApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { formatTs } from "@/lib/format";
 import type { Source, SourceFormat } from "@/lib/types";
 
@@ -36,6 +37,8 @@ function formatSummary(formatJson: string): string {
 }
 
 export function SourcesPage() {
+  const { user } = useAuth();
+  const canMutate = user?.role === "admin" || user?.role === "root";
   const [sources, setSources] = useState<Source[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshingId, setRefreshingId] = useState<number | null>(null);
@@ -68,7 +71,7 @@ export function SourcesPage() {
     try {
       await api(`/api/sources/${source.id}`, { method: "PUT", body: { enabled } });
     } catch (err) {
-      toast.error(`Failed to update ${source.name}: ${errorMessage(err)}`);
+      toastApiError(err, `Failed to update ${source.name}`);
       await load();
     } finally {
       setTogglingId(null);
@@ -85,7 +88,7 @@ export function SourcesPage() {
       toast.success(`${source.name}: ${res.entryCount.toLocaleString()} entries`);
       await load();
     } catch (err) {
-      toast.error(`Refresh failed for ${source.name}: ${errorMessage(err)}`);
+      toastApiError(err, `Refresh failed for ${source.name}`);
       await load(); // pick up last_error
     } finally {
       setRefreshingId(null);
@@ -101,7 +104,7 @@ export function SourcesPage() {
       setDeleting(null);
       await load();
     } catch (err) {
-      toast.error(`Delete failed: ${errorMessage(err)}`);
+      toastApiError(err, "Delete failed");
     } finally {
       setDeleteBusy(false);
     }
@@ -131,30 +134,34 @@ export function SourcesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Sources</h1>
-        <div className="flex gap-2">
-          {sources.length === 0 && (
-            <Button variant="outline" asChild>
-              <Link to="/setup">
-                <Wand2 className="mr-2 h-4 w-4" />
-                Run setup
-              </Link>
+        {canMutate && (
+          <div className="flex gap-2">
+            {sources.length === 0 && (
+              <Button variant="outline" asChild>
+                <Link to="/setup">
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Run setup
+                </Link>
+              </Button>
+            )}
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setEditorOpen(true);
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add source
             </Button>
-          )}
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setEditorOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add source
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
 
       {sources.length === 0 ? (
         <div className="rounded-md border border-dashed p-12 text-center text-muted-foreground">
-          No sources yet. Add one manually or run the setup wizard to seed the VPN list.
+          {canMutate
+            ? "No sources yet. Add one manually or run the setup wizard to seed the VPN list."
+            : "No sources configured yet."}
         </div>
       ) : (
         <Table>
@@ -182,7 +189,7 @@ export function SourcesPage() {
                 <TableCell>
                   <Switch
                     checked={s.enabled === 1}
-                    disabled={togglingId === s.id}
+                    disabled={!canMutate || togglingId === s.id}
                     onCheckedChange={(v) => void toggleEnabled(s, v)}
                     aria-label={`Enable ${s.name}`}
                   />
@@ -199,40 +206,44 @@ export function SourcesPage() {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Refresh now"
-                      disabled={refreshingId === s.id}
-                      onClick={() => void refreshNow(s)}
-                    >
-                      {refreshingId === s.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Edit"
-                      onClick={() => {
-                        setEditing(s);
-                        setEditorOpen(true);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      title="Delete"
-                      onClick={() => setDeleting(s)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
+                  {canMutate ? (
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Refresh now"
+                        disabled={refreshingId === s.id}
+                        onClick={() => void refreshNow(s)}
+                      >
+                        {refreshingId === s.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Edit"
+                        onClick={() => {
+                          setEditing(s);
+                          setEditorOpen(true);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title="Delete"
+                        onClick={() => setDeleting(s)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">view only</span>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

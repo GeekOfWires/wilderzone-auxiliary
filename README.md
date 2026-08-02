@@ -1,4 +1,6 @@
-# tribes-proxy-check
+<img src="docs/assets/wilderzone_aux.svg" alt="Wilderzone Auxiliary" width="480">
+
+# Wilderzone Auxiliary
 
 VPN/proxy detection API for Tribes 2 game servers, with a web admin panel.
 Cloudflare Worker + D1 (SQLite) + KV + Workers Static Assets, TypeScript throughout.
@@ -38,7 +40,7 @@ Prereqs: [Node.js](https://nodejs.org), a Cloudflare account (Workers Paid plan)
 npm install
 
 # 1. Create the D1 database and KV namespace, then paste the IDs into wrangler.toml
-npx wrangler d1 create tribes-proxy-check-db
+npx wrangler d1 create wilderzone-aux-db
 npx wrangler kv:namespace create LISTS
 
 # 2. Run the migration
@@ -52,7 +54,7 @@ npx wrangler secret put ROOT_PASSWORD      # optional initial root password
 npm run deploy
 ```
 
-The worker goes live at `https://tribes-proxy-check.<your-subdomain>.workers.dev`.
+The worker goes live at `https://wilderzone-aux.<your-subdomain>.workers.dev`.
 
 **First run:** open `/admin/`, log in as `root` (password = `ROOT_PASSWORD` secret,
 or `tribes` if unset — you'll be forced to change it), and the setup wizard seeds
@@ -65,7 +67,7 @@ Drop the companion script into your Classic server's `scripts/autoexec/`, then i
 `prefs/serverPrefs.cs`:
 
 ```
-$Host::WhoisVpnWorkerHost = "tribes-proxy-check.geekofwires.workers.dev";
+$Host::WhoisVpnWorkerHost = "wilderzone-aux.geekofwires.workers.dev";
 $Host::WhoisVpnWorkerKey = "tpc_<your server-role key>";
 $Host::AutoKickVPNs = 1;   // optional: auto-kick flagged players on connect
 ```
@@ -123,9 +125,37 @@ Session cookie auth (from `auth/login`); key-management routes also accept
 
 | role | purpose | rate limit |
 |---|---|---|
-| `public` | casual use; one default key seeded (`tpc_public`) | 20/hour **per requesting IP** |
+| `public` | casual use; one default key seeded (`tpc_public`), **viewable by all panel users** | 20/hour **per requesting IP** |
 | `server` | game servers | unlimited (configurable) |
 | `admin` | machine-to-machine key minting via `/api/keys` | n/a |
+
+### Panel user roles
+
+| role | can do |
+|---|---|
+| `standard` | view Sources and Entries, view the public API key, **request** API keys |
+| `admin` | standard + Query Log, create/revoke API keys, **approve/deny key requests** |
+| `root` | admin + add/remove panel users (only root) |
+
+### Key requests
+
+Standard users request keys; admins/root review them.
+
+| route | notes |
+|---|---|
+| `POST /api/keys/requests` | `{name, note?}` — creates a pending request (any user) |
+| `GET /api/keys/requests/mine` | the requester's own requests; approved ones include `granted_key` |
+| `GET /api/keys/requests?status=pending` | admin/root: all requests |
+| `POST /api/keys/requests/:id/approve` | admin/root: mints the key (returned once here too) |
+| `POST /api/keys/requests/:id/deny` | admin/root: `{note?}` |
+
+### User management (root only)
+
+| route | notes |
+|---|---|
+| `GET /api/users` | list panel users |
+| `POST /api/users` | `{username, password, role}` — role `admin` or `standard`; new users must change password on first login |
+| `DELETE /api/users/:id` | cannot remove root or yourself |
 
 ## CIDR source format mappings
 

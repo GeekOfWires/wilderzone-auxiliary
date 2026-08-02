@@ -53,7 +53,33 @@ export interface SetupStatus {
   totalEntries: number;
 }
 
+export type Role = "root" | "admin" | "standard";
+
 export interface MeResponse {
   username: string;
+  role: Role;
   mustChangePassword: boolean;
+}
+
+export interface UserRow {
+  id: number;
+  username: string;
+  role: Role;
+  must_change_password: number; // 0 | 1
+  created_at: string;
+}
+
+export type KeyRequestStatus = "pending" | "approved" | "denied";
+
+export interface KeyRequest {
+  id: number;
+  name: string;
+  role: string; // requested key role, always "server" for now
+  status: KeyRequestStatus;
+  note: string | null;
+  granted_key: string | null; // set when approved (only on the requester's own view)
+  created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  requested_by?: string; // present on the admin/root views
 }

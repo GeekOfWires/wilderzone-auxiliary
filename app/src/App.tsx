@@ -7,6 +7,7 @@ import { LoginPage } from "@/pages/login";
 import { LogsPage } from "@/pages/logs";
 import { SetupPage } from "@/pages/setup";
 import { SourcesPage } from "@/pages/sources";
+import { UsersPage } from "@/pages/users";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/keys" element={<KeysPage />} />
         <Route path="/logs" element={<LogsPage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/users" element={<UsersPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

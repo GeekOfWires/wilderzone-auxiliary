@@ -10,7 +10,15 @@ nav_order: 6
 PBKDF2-HMAC-SHA256, 100,000 iterations, per-user 16-byte salt, hashes stored in
 D1. Verification uses a constant-time comparison. The root account is seeded by
 migration; set `ROOT_PASSWORD` at deploy or change the default `tribes`
-password on first login (the panel forces it).
+password on first login (the panel forces it). Additional panel users are
+created by root with temporary passwords and must change them on first login.
+
+## Roles
+
+Least-privilege by default: `standard` users can only view sources/entries,
+see the public key, and request keys; `admin` adds key management and the
+query log; only `root` can add or remove users. Role checks run on every
+request (403 for insufficient role, 401 for no session).
 
 ## Sessions
 

@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, errorMessage } from "@/lib/api";
@@ -28,19 +28,25 @@ export function LoginPage() {
     setError(null);
     setBusy(true);
     try {
-      const res = await api<MeResponse & { ok: boolean }>("/api/auth/login", {
-        method: "POST",
-        body: { username, password },
-      });
-      const me: MeResponse = { username: res.username, mustChangePassword: res.mustChangePassword };
+      await api<{ ok: boolean; username: string; mustChangePassword: boolean }>(
+        "/api/auth/login",
+        { method: "POST", body: { username, password } }
+      );
+      // The login response has no role — fetch the full session profile.
+      const me = await api<MeResponse>("/api/auth/me");
       setUser(me);
       if (me.mustChangePassword) {
         navigate("/account", { replace: true });
         return;
       }
-      // First run? Route into the setup wizard when no sources exist yet.
-      const status = await api<SetupStatus>("/api/setup/status");
-      navigate(status.sourceCount === 0 ? "/setup" : "/", { replace: true });
+      // First run? Admins route into the setup wizard when no sources exist yet.
+      // (setup endpoints are admin-only, so standard users skip this check.)
+      if (me.role !== "standard") {
+        const status = await api<SetupStatus>("/api/setup/status");
+        navigate(status.sourceCount === 0 ? "/setup" : "/", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -52,8 +58,10 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>TPC Admin</CardTitle>
-          <CardDescription>Sign in to manage VPN/CIDR screening</CardDescription>
+          <div className="mb-2 flex justify-center">
+            <img src="/admin/wilderzone_aux.svg" alt="Wilderzone Auxiliary" className="h-10" />
+          </div>
+          <CardDescription className="text-center">Sign in to Wilderzone Auxiliary</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">

@@ -30,7 +30,7 @@ function edgeCache(): Cache {
 
 export async function lookupIpInfo(ip: string, ctx: Waitable): Promise<IpInfo> {
   const cache = edgeCache();
-  const cacheKey = new Request(`https://tribes-proxy-check.internal/ipinfo/${ip}`);
+  const cacheKey = new Request(`https://wz-auxiliary.internal/ipinfo/${ip}`);
 
   const cached = await cache.match(cacheKey);
   if (cached) {

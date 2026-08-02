@@ -44,9 +44,20 @@ a view onto the worker's cached list bodies, exactly what checks run against.
 
 ### API Keys
 
-Create keys per role (see [API reference](api-reference#api-keys)), set custom
-rate limits, revoke compromised keys. The full key is shown **once** at
-creation — copy it into `serverPrefs.cs` (`$Host::WhoisVpnWorkerKey`) right away.
+What you see depends on your role:
+
+- **standard** — the **public key** card (viewable by everyone, since the service
+  rate-limits it per requesting IP), a **Request API key** dialog, and your own
+  request history with status badges. Approved requests reveal the minted key
+  with a copy button.
+- **admin / root** — the full keys table with create/revoke, plus a **Requests**
+  section to approve (shows the minted key once) or deny (with a note) pending
+  requests from standard users.
+
+### Users (root only)
+
+Add and remove panel users. New users get a temporary password and are forced
+to change it on first login. Root and your own account can't be removed.
 
 ### Query Log
 

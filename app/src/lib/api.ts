@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 export class ApiError extends Error {
   status: number;
 
@@ -44,4 +46,17 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
 export function errorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
   return String(err);
+}
+
+/**
+ * Toast for a failed API action. 403s get a friendly "not authorized"
+ * message (the backend rejects role-inappropriate actions with 403);
+ * anything else shows the prefix plus the server error.
+ */
+export function toastApiError(err: unknown, prefix: string): void {
+  if (err instanceof ApiError && err.status === 403) {
+    toast.error("Not authorized — your role doesn't allow this action.");
+    return;
+  }
+  toast.error(`${prefix}: ${errorMessage(err)}`);
 }

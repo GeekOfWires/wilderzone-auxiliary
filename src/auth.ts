@@ -91,18 +91,18 @@ export async function verifySession(token: string, secret: string): Promise<Sess
 }
 
 export function sessionCookie(token: string): string {
-  return `tpc_session=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`;
+  return `wz_session=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL_MS / 1000}`;
 }
 
 export function clearSessionCookie(): string {
-  return "tpc_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0";
+  return "wz_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0";
 }
 
 export function readSessionCookie(request: Request): string | null {
   const header = request.headers.get("Cookie") ?? "";
   for (const part of header.split(";")) {
     const [k, ...v] = part.trim().split("=");
-    if (k === "tpc_session") return v.join("=");
+    if (k === "wz_session") return v.join("=");
   }
   return null;
 }
@@ -112,5 +112,5 @@ export function readSessionCookie(request: Request): string | null {
 // ---------------------------------------------------------------------------
 
 export function generateApiKey(): string {
-  return "tpc_" + toHex(crypto.getRandomValues(new Uint8Array(16)));
+  return "wza_" + toHex(crypto.getRandomValues(new Uint8Array(16)));
 }

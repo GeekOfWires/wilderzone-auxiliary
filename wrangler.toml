@@ -1,21 +1,21 @@
 #:schema ../node_modules/wrangler/config-schema.json
-name = "tribes-proxy-check"
+name = "wilderzone-aux"
 main = "src/index.ts"
 compatibility_date = "2024-12-30"
 workers_dev = true
 
 # D1 database: users, sources, api_keys, query_log
-# create with: wrangler d1 create tribes-proxy-check-db
+# create with: wrangler d1 create wilderzone-aux-db
 [[d1_databases]]
 binding = "DB"
-database_name = "tribes-proxy-check-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_name = "wilderzone-aux-db"
+database_id = "2c736737-afc9-4130-8c8b-f25e19f2ab1f"
 
 # KV namespace: raw CIDR list bodies + rate-limit counters
 # create with: wrangler kv:namespace create LISTS
 [[kv_namespaces]]
 binding = "LISTS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "d4dadb28ec4944a7a46e64f15d81c8de"
 
 # Admin panel static assets (built from app/ with Vite)
 [assets]

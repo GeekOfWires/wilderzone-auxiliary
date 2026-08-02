@@ -12,15 +12,15 @@ authenticated with `npx wrangler login`.
 ## 1. Install
 
 ```bash
-git clone https://github.com/GeekOfWires/tribes-proxy-check.git
-cd tribes-proxy-check
+git clone https://github.com/GeekOfWires/wilderzone-auxiliary.git
+cd wilderzone-auxiliary
 npm install
 ```
 
 ## 2. Create storage
 
 ```bash
-npx wrangler d1 create tribes-proxy-check-db
+npx wrangler d1 create wilderzone-aux-db
 npx wrangler kv:namespace create LISTS
 ```
 
@@ -29,7 +29,7 @@ Paste the printed IDs into `wrangler.toml`:
 ```toml
 [[d1_databases]]
 binding = "DB"
-database_name = "tribes-proxy-check-db"
+database_name = "wilderzone-aux-db"
 database_id = "<your d1 id>"
 
 [[kv_namespaces]]
@@ -55,7 +55,7 @@ first login. Without `SESSION_SECRET`, session tokens are forgeable — always s
 npm run deploy   # builds the admin panel, then wrangler deploy
 ```
 
-The worker goes live at `https://tribes-proxy-check.<your-subdomain>.workers.dev`.
+The worker goes live at `https://wilderzone-aux.<your-subdomain>.workers.dev`.
 
 ## 5. First run
 
@@ -71,7 +71,7 @@ Drop the companion script (`gowWhoisVpn.cs`) into your Classic server's
 `scripts/autoexec/`, delete any stale `.dso` files, and add to `prefs/serverPrefs.cs`:
 
 ```php
-$Host::WhoisVpnWorkerHost = "tribes-proxy-check.<your-subdomain>.workers.dev";
+$Host::WhoisVpnWorkerHost = "wilderzone-aux.<your-subdomain>.workers.dev";
 $Host::WhoisVpnWorkerKey = "tpc_<your server-role key>";
 $Host::AutoKickVPNs = 1;   // optional: auto-kick flagged players on connect
 ```

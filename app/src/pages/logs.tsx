@@ -1,6 +1,5 @@
 import { ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { api, errorMessage } from "@/lib/api";
+import { api, toastApiError } from "@/lib/api";
 import { formatTs } from "@/lib/format";
 import type { LogRow } from "@/lib/types";
 
@@ -49,7 +48,7 @@ export function LogsPage() {
         const res = await api<LogsResponse>(`/api/logs?${params}`);
         setData(res);
       } catch (err) {
-        if (!silent) toast.error(`Failed to load logs: ${errorMessage(err)}`);
+        if (!silent) toastApiError(err, "Failed to load logs");
       } finally {
         setLoading(false);
       }
