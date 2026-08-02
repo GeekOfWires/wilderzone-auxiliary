@@ -59,7 +59,7 @@ export function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <div className="mb-2 flex justify-center">
-            <img src="/admin/wilderzone_aux.svg" alt="Wilderzone Auxiliary Services" className="h-10" />
+            <div className="rounded-md bg-[#0e1214] p-2"><img src="/admin/wilderzone_aux.svg" alt="Wilderzone Auxiliary Services" className="h-10" /></div>
           </div>
           <CardDescription className="text-center">Sign in to Wilderzone Auxiliary Services</CardDescription>
         </CardHeader>

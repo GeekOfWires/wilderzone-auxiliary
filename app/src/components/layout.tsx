@@ -74,7 +74,7 @@ export function Layout() {
     <div className="flex min-h-screen">
       <aside className="flex w-56 shrink-0 flex-col border-r bg-card">
         <div className="flex h-14 items-center gap-2 border-b px-4">
-          <img src="/admin/wilderzone_aux.svg" alt="Wilderzone Auxiliary Services" className="h-8" />
+          <div className="rounded-md bg-[#0e1214] p-1.5"><img src="/admin/wilderzone_aux.svg" alt="Wilderzone Auxiliary Services" className="h-8" /></div>
         </div>
         <nav className="flex-1 space-y-1 p-2">
           {NAV.filter((item) => item.roles.includes(user.role)).map(
