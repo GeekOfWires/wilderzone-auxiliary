@@ -1,4 +1,4 @@
-title: Wilderzone Auxiliary
+title: Wilderzone Auxiliary Services
 description: >-
   VPN/proxy detection API for Tribes 2 game servers, with a web admin panel.
   Cloudflare Worker + D1 + KV.

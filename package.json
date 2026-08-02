@@ -1,7 +1,7 @@
 {
   "name": "wilderzone-auxiliary",
   "version": "1.0.0",
-  "description": "Wilderzone Auxiliary - auxiliary services for Wilderzone (Tribes 2) game servers: VPN/proxy detection with a web admin panel, and more to come. Cloudflare Worker + D1 + KV.",
+  "description": "Wilderzone Auxiliary Services - auxiliary services for Wilderzone (Tribes 2) game servers: VPN/proxy detection with a web admin panel, and more to come. Cloudflare Worker + D1 + KV.",
   "author": "GeekOfWires <GeekOfWires@users.noreply.github.com>",
   "license": "MIT",
   "private": true,

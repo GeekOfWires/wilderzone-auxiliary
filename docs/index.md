@@ -5,7 +5,7 @@ nav_order: 1
 
 <div class="t2-hero" markdown="1">
 
-# Wilderzone Auxiliary
+# Wilderzone Auxiliary Services
 
 **VPN/proxy detection for Tribes 2 game servers.** One HTTPS GET per player IP
 returns geolocation, ip-api proxy/hosting flags, and a VPN-provider CIDR verdict

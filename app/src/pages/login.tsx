@@ -59,9 +59,9 @@ export function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <div className="mb-2 flex justify-center">
-            <img src="/admin/wilderzone_aux.svg" alt="Wilderzone Auxiliary" className="h-10" />
+            <img src="/admin/wilderzone_aux.svg" alt="Wilderzone Auxiliary Services" className="h-10" />
           </div>
-          <CardDescription className="text-center">Sign in to Wilderzone Auxiliary</CardDescription>
+          <CardDescription className="text-center">Sign in to Wilderzone Auxiliary Services</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">

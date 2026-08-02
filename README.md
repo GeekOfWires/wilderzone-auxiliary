@@ -1,6 +1,6 @@
 <img src="docs/assets/wilderzone_aux.svg" alt="Wilderzone Auxiliary" width="480">
 
-# Wilderzone Auxiliary
+# Wilderzone Auxiliary Services
 
 VPN/proxy detection API for Tribes 2 game servers, with a web admin panel.
 Cloudflare Worker + D1 (SQLite) + KV + Workers Static Assets, TypeScript throughout.
