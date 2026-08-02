@@ -1,0 +1,32 @@
+#:schema ../node_modules/wrangler/config-schema.json
+name = "tribes-proxy-check"
+main = "src/index.ts"
+compatibility_date = "2024-12-30"
+workers_dev = true
+
+# D1 database: users, sources, api_keys, query_log
+# create with: wrangler d1 create tribes-proxy-check-db
+[[d1_databases]]
+binding = "DB"
+database_name = "tribes-proxy-check-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# KV namespace: raw CIDR list bodies + rate-limit counters
+# create with: wrangler kv:namespace create LISTS
+[[kv_namespaces]]
+binding = "LISTS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Admin panel static assets (built from app/ with Vite)
+[assets]
+directory = "./app/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# Daily refresh of all enabled CIDR sources (04:17 UTC)
+[triggers]
+crons = ["17 4 * * *"]
+
+# Secrets (set with wrangler secret put):
+#   ROOT_PASSWORD   - optional initial root password (otherwise root/tribes + forced change)
+#   SESSION_SECRET  - HMAC secret for session cookies (required in production)

@@ -1,0 +1,32 @@
+title: tribes-proxy-check
+description: >-
+  VPN/proxy detection API for Tribes 2 game servers, with a web admin panel.
+  Cloudflare Worker + D1 + KV.
+url: "https://geekofwires.github.io"
+baseurl: "/tribes-proxy-check"
+
+# GitHub Pages builds this folder with Jekyll; just-the-docs gives us nav,
+# search, and a custom color scheme hook.
+remote_theme: just-the-docs/just-the-docs
+color_scheme: tribes2
+
+search_enabled: true
+heading_anchors: true
+
+# Top-right auxiliary links
+aux_links:
+  "View on GitHub":
+    - "https://github.com/GeekOfWires/tribes-proxy-check"
+  "Play Tribes 2":
+    - "https://playt2.com"
+
+aux_links_new_tab: true
+
+footer_content: >-
+  Maintained by <a href="https://github.com/GeekOfWires">GeekOfWires</a> ·
+  MIT License · Not affiliated with Sierra/Dynamix. Tribes 2 lives at
+  <a href="https://www.tribesnext.com">TribesNEXT</a>.
+
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
