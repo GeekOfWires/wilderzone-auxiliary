@@ -43,8 +43,8 @@
 //                          from.
 // /whoisreload           - clear the per-IP result cache (fresh verdicts
 //                          from the worker on next lookup).
-// Right-click a player in the scoreboard and choose "Whois Lookup" for the
-// same report from the player popup menu.
+// Right-click a player in the scoreboard and choose "Client Info" - super
+// admins get the full whois report appended to the stock client info.
 //
 //Reports include smurf detection using TacoClassic's own process: players
 //whose chosen name differs from their real account name (isSmurf, set at
@@ -90,13 +90,16 @@ package WhoisVpn
       whoisAutoCheck(%client);
    }
 
-   // add "Whois Lookup" to the player right-click popup for super admins
-   function DefaultGame::sendGamePlayerPopupMenu(%game, %client, %targetClient, %key)
+   // The right-click popup only reliably invokes built-in server commands,
+   // so instead of a custom menu item we extend TacoClassic's own Client
+   // Info action: super admins get the full whois report appended to the
+   // stock client info output.
+   function ServerCmdPrintClientInfo(%client, %targetClient)
    {
-      parent::sendGamePlayerPopupMenu(%game, %client, %targetClient, %key);
+      parent::ServerCmdPrintClientInfo(%client, %targetClient);
 
-      if(%client.isSuperAdmin && whoisEnabled() && !%targetClient.isAIControlled())
-         messageClient(%client, 'MsgPlayerPopupItem', "", %key, "WhoisLookup", "", 'Whois Lookup', 21);
+      if(%client.isSuperAdmin && whoisEnabled() && isObject(%targetClient) && !%targetClient.isAIControlled())
+         whoisDoLookup(%client, %targetClient);
    }
 };
 
@@ -457,18 +460,10 @@ function whoisDoLookup(%sender, %cl)
    }
 }
 
-// Player right-click popup: super admins get a "Whois Lookup" item. The
-// popup invokes ServerCmdWhoisLookup(%client, %targetClient) on selection,
-// same mechanism as TacoClassic's own PrintClientInfo.
-function ServerCmdWhoisLookup(%client, %targetClient)
-{
-   if(!%client.isSuperAdmin || !whoisEnabled() || !isObject(%targetClient))
-      return;
-   if(%targetClient.isAIControlled())
-      return;
-
-   whoisDoLookup(%client, %targetClient);
-}
+// Player right-click popup: choosing "Client Info" as a super admin also
+// runs the whois lookup (see the package override at the top of this file).
+// The stock popup only reliably invokes built-in server commands, so the
+// lookup rides on TacoClassic's own PrintClientInfo path.
 
 function whoisReport(%admin, %ip)
 {
