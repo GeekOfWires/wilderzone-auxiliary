@@ -60,7 +60,7 @@ export function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <div className="mb-2 flex justify-center">
-            <Logo height={48} />
+            <Logo height={64} />
           </div>
           <CardDescription className="text-center">Sign in to Wilderzone Auxiliary Services</CardDescription>
         </CardHeader>

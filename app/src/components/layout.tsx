@@ -75,7 +75,7 @@ export function Layout() {
     <div className="flex min-h-screen">
       <aside className="flex w-56 shrink-0 flex-col border-r bg-card">
         <div className="flex h-14 items-center gap-2 border-b px-4">
-          <Logo height={36} />
+          <Logo height={48} />
         </div>
         <nav className="flex-1 space-y-1 p-2">
           {NAV.filter((item) => item.roles.includes(user.role)).map(

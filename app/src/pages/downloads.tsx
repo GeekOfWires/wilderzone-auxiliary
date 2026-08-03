@@ -14,7 +14,7 @@ export function DownloadsPage() {
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4">
           <Link to="/" aria-label="Home">
-            <Logo height={40} />
+            <Logo height={56} />
           </Link>
           <nav className="flex items-center gap-1">
             <Button variant="ghost" size="sm" asChild>
