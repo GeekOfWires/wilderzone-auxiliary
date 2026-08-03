@@ -7,7 +7,9 @@ baseurl: "/wilderzone-auxiliary"
 
 # GitHub Pages builds this folder with Jekyll; just-the-docs gives us nav,
 # search, and a custom color scheme hook.
-remote_theme: just-the-docs/just-the-docs
+# IMPORTANT: pin v0.4.2 - github-pages (Jekyll 3.10 + sassc) cannot build
+# just-the-docs 0.5+ (they require Jekyll 4 / dart-sass).
+remote_theme: just-the-docs/just-the-docs@v0.4.2
 color_scheme: tribes2
 
 search_enabled: true

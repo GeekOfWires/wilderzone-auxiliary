@@ -2,6 +2,7 @@ source "https://rubygems.org"
 
 # Local preview of the GitHub Pages build:
 #   cd docs && bundle install && bundle exec jekyll serve
+# Must match the pinned remote_theme in _config.yml (github-pages compat).
 gem "jekyll", "~> 4.3"
-gem "just-the-docs", "~> 0.8"
+gem "just-the-docs", "0.4.2"
 gem "kramdown-parser-gfm"
