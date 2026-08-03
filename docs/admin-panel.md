@@ -42,7 +42,7 @@ sources never participate in checks.
 Browse the normalized CIDRs of any source — search (`q`) and paginate. This is
 a view onto the worker's cached list bodies, exactly what checks run against.
 
-### API Keys
+### Whois API Keys
 
 What you see depends on your role:
 

@@ -58,7 +58,7 @@ The worker goes live at `https://wilderzone-aux.<your-subdomain>.workers.dev`.
 
 **First run:** open `/admin/`, log in as `root` (password = `ROOT_PASSWORD` secret,
 or `tribes` if unset — you'll be forced to change it), and the setup wizard seeds
-the X4BNet VPN CIDR list. Then mint a `server`-role API key on the **API Keys**
+the X4BNet VPN CIDR list. Then mint a `server`-role API key on the **Whois API Keys**
 page for your game server.
 
 ### Game server setup (Tribes 2)

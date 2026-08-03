@@ -179,7 +179,7 @@ export function KeysAdminPage() {
   if (loadError) {
     return (
       <div className="space-y-4">
-        <h1 className="text-2xl font-semibold">API Keys</h1>
+        <h1 className="text-2xl font-semibold">Whois API Keys</h1>
         <p className="text-destructive">Failed to load: {loadError}</p>
         <Button variant="outline" onClick={() => void load()}>
           Retry
@@ -202,7 +202,7 @@ export function KeysAdminPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">API Keys</h1>
+        <h1 className="text-2xl font-semibold">Whois API Keys</h1>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Create key

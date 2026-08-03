@@ -62,7 +62,7 @@ The worker goes live at `https://wilderzone-aux.<your-subdomain>.workers.dev`.
 1. Open `https://<worker>/admin/` and log in as `root`.
 2. The setup wizard walks you through setting the root password and seeding the
    X4BNet VPN CIDR list (shows the parsed entry count when done).
-3. Open **API Keys**, mint a `server`-role key for your game server, and copy it —
+3. Open **Whois API Keys**, mint a `server`-role key for your game server, and copy it —
    it is only shown once.
 
 ## 6. Wire up the game server

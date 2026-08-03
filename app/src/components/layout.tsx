@@ -32,7 +32,7 @@ const ADMINS: Role[] = ["root", "admin"];
 const NAV: NavItem[] = [
   { to: "/admin", label: "Sources", icon: ListFilter, end: true, roles: ALL },
   { to: "/admin/entries", label: "Entries", icon: ScrollText, end: false, roles: ALL },
-  { to: "/admin/keys", label: "API Keys", icon: KeyRound, end: false, roles: ALL },
+  { to: "/admin/keys", label: "Whois API Keys", icon: KeyRound, end: false, roles: ALL },
   { to: "/admin/logs", label: "Query Log", icon: ShieldCheck, end: false, roles: ADMINS },
   { to: "/admin/users", label: "Users", icon: Users, end: false, roles: ["root"] },
   { to: "/admin/account", label: "Account", icon: User, end: false, roles: ALL },
