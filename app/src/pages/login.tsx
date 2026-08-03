@@ -21,7 +21,7 @@ export function LoginPage() {
 
   // Already authenticated (and not forced to change password) → skip login.
   if (user) {
-    return <Navigate to={user.mustChangePassword ? "/account" : "/"} replace />;
+    return <Navigate to={user.mustChangePassword ? "/admin/account" : "/admin"} replace />;
   }
 
   const onSubmit = async (e: FormEvent) => {
@@ -37,16 +37,16 @@ export function LoginPage() {
       const me = await api<MeResponse>("/api/auth/me");
       setUser(me);
       if (me.mustChangePassword) {
-        navigate("/account", { replace: true });
+        navigate("/admin/account", { replace: true });
         return;
       }
       // First run? Admins route into the setup wizard when no sources exist yet.
       // (setup endpoints are admin-only, so standard users skip this check.)
       if (me.role !== "standard") {
         const status = await api<SetupStatus>("/api/setup/status");
-        navigate(status.sourceCount === 0 ? "/setup" : "/", { replace: true });
+        navigate(status.sourceCount === 0 ? "/admin/setup" : "/admin", { replace: true });
       } else {
-        navigate("/", { replace: true });
+        navigate("/admin", { replace: true });
       }
     } catch (err) {
       setError(errorMessage(err));

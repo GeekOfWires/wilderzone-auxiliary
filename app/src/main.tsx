@@ -11,7 +11,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter basename="/admin">
+        <BrowserRouter basename="/">
           <App />
           <Toaster richColors closeButton />
         </BrowserRouter>

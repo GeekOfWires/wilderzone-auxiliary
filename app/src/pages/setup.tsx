@@ -99,7 +99,7 @@ export function SetupPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">First-run setup</h1>
-        <Button variant="ghost" onClick={() => navigate("/")}>
+        <Button variant="ghost" onClick={() => navigate("/admin")}>
           Skip setup
         </Button>
       </div>

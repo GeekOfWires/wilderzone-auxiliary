@@ -138,7 +138,7 @@ export function SourcesPage() {
           <div className="flex gap-2">
             {sources.length === 0 && (
               <Button variant="outline" asChild>
-                <Link to="/setup">
+                <Link to="/admin/setup">
                   <Wand2 className="mr-2 h-4 w-4" />
                   Run setup
                 </Link>

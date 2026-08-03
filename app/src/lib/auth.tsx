@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await api("/api/auth/logout", { method: "POST" });
     } finally {
       setUser(null);
-      window.location.assign("/admin/login");
+      window.location.assign("/login");
     }
   }, []);
 

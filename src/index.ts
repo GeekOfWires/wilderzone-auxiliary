@@ -792,12 +792,12 @@ app.get("/api/logs", async (c) => {
 // Admin panel assets + fallback
 // ===========================================================================
 
-app.get("/", (c) => c.redirect("/admin/"));
-
-app.get("/admin/*", (c) => {
-  const url = new URL(c.req.url);
-  url.pathname = url.pathname.replace(/^\/admin/, "") || "/";
-  return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+app.get("/*", (c) => {
+  const path = new URL(c.req.url).pathname;
+  if (path.startsWith("/api/") || path.startsWith("/tribes-api/")) {
+    return jsonErr(c, "not found", 404);
+  }
+  return c.env.ASSETS.fetch(c.req.raw);
 });
 
 app.notFound((c) => jsonErr(c, "not found", 404));

@@ -30,12 +30,12 @@ const ALL: Role[] = ["root", "admin", "standard"];
 const ADMINS: Role[] = ["root", "admin"];
 
 const NAV: NavItem[] = [
-  { to: "/", label: "Sources", icon: ListFilter, end: true, roles: ALL },
-  { to: "/entries", label: "Entries", icon: ScrollText, end: false, roles: ALL },
-  { to: "/keys", label: "API Keys", icon: KeyRound, end: false, roles: ALL },
-  { to: "/logs", label: "Query Log", icon: ShieldCheck, end: false, roles: ADMINS },
-  { to: "/users", label: "Users", icon: Users, end: false, roles: ["root"] },
-  { to: "/account", label: "Account", icon: User, end: false, roles: ALL },
+  { to: "/admin", label: "Sources", icon: ListFilter, end: true, roles: ALL },
+  { to: "/admin/entries", label: "Entries", icon: ScrollText, end: false, roles: ALL },
+  { to: "/admin/keys", label: "API Keys", icon: KeyRound, end: false, roles: ALL },
+  { to: "/admin/logs", label: "Query Log", icon: ShieldCheck, end: false, roles: ADMINS },
+  { to: "/admin/users", label: "Users", icon: Users, end: false, roles: ["root"] },
+  { to: "/admin/account", label: "Account", icon: User, end: false, roles: ALL },
 ];
 
 export function Layout() {
@@ -50,11 +50,11 @@ export function Layout() {
     );
   }
   if (user === null) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/" replace />;
   }
   // Forced password change: block all other navigation until done.
   if (user.mustChangePassword && location.pathname !== "/account") {
-    return <Navigate to="/account" replace />;
+    return <Navigate to="/admin/account" replace />;
   }
 
   // Role gating: keep users off pages their role can't use (backend 403s anyway).
@@ -66,9 +66,9 @@ export function Layout() {
   const allowed = roleHome[user.role];
   const pathAllowed =
     allowed.some((to) => (to === "/" ? location.pathname === "/" : location.pathname.startsWith(to))) ||
-    location.pathname === "/setup"; // setup wizard is admin-only but not in nav; guard below
-  if (!pathAllowed || (location.pathname === "/setup" && user.role === "standard")) {
-    return <Navigate to="/" replace />;
+    location.pathname === "/admin/setup"; // setup wizard is admin-only but not in nav; guard below
+  if (!pathAllowed || (location.pathname === "/admin/setup" && user.role === "standard")) {
+    return <Navigate to="/admin" replace />;
   }
 
   return (

@@ -41,7 +41,7 @@ export function AccountPage() {
       setNewPassword("");
       setConfirmPassword("");
       await refresh();
-      if (user?.mustChangePassword) navigate("/");
+      if (user?.mustChangePassword) navigate("/admin");
     } catch (err) {
       setError(errorMessage(err));
     } finally {

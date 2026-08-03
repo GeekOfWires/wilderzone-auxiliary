@@ -31,7 +31,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
 
   if (res.status === 401) {
     if (!path.startsWith("/api/auth/") && !window.location.pathname.endsWith("/login")) {
-      window.location.assign("/admin/login");
+      window.location.assign("/login");
     }
     throw new ApiError("unauthorized", 401);
   }
