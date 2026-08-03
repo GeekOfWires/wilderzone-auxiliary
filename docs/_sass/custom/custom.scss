@@ -1,6 +1,14 @@
 // Custom overrides on top of the tribes2 color scheme.
 // Tribes 2 flavor: condensed sci-fi headings (Rajdhani ≈ Sui Generis vibes),
 // mint accents, teal secondary.
+//
+// NOTE: these accents are defined HERE (not in the color scheme) because the
+// theme compiles several scheme entry files (default/light/dark), each of
+// which includes this file - variables must exist in every build.
+
+$t2-teal: #3cb4b4;
+$t2-mint: #05f5b4;
+$t2-mint-dark: #03e0a3;
 
 h1, h2, h3, h4, h5, h6,
 .site-title,
