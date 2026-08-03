@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout";
 import { AccountPage } from "@/pages/account";
 import { EntriesPage } from "@/pages/entries";
 import { KeysPage } from "@/pages/keys";
+import { HomePage } from "@/pages/home";
 import { LoginPage } from "@/pages/login";
 import { LogsPage } from "@/pages/logs";
 import { SetupPage } from "@/pages/setup";
@@ -13,6 +14,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/home" element={<HomePage />} />
       <Route element={<Layout />}>
         <Route index element={<SourcesPage />} />
         <Route path="/setup" element={<SetupPage />} />

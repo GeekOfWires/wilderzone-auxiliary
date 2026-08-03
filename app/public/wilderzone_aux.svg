@@ -1,7 +1,6 @@
 <svg xmlns="http://w3.org" viewBox="0 0 1000 140" width="1000" height="140">
   <defs>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&amp;family=Squada+One&amp;display=swap');
       .t2-brand-title {
         font-family: 'Squada One', 'Arial Black', sans-serif;
       }

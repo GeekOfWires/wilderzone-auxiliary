@@ -522,7 +522,7 @@ app.get("/api/keys", async (c) => {
   }
 
   const rows = await c.env.DB.prepare(
-    "SELECT id, key, name, role, rate_limit, rate_window_s, created_by, created_at, revoked_at, last_used_at FROM api_keys ORDER BY id"
+    "SELECT id, key, name, role, rate_limit, rate_window_s, created_by, created_at, revoked_at, last_used_at FROM api_keys WHERE revoked_at IS NULL ORDER BY id"
   ).all<ApiKeyRow>();
   return c.json({ keys: rows.results });
 });

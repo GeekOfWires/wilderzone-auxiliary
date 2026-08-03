@@ -2,6 +2,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -59,7 +60,7 @@ export function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader>
           <div className="mb-2 flex justify-center">
-            <div className="rounded-md bg-[#0e1214] p-2"><img src="/admin/wilderzone_aux.svg" alt="Wilderzone Auxiliary Services" className="h-10" /></div>
+            <Logo height={48} />
           </div>
           <CardDescription className="text-center">Sign in to Wilderzone Auxiliary Services</CardDescription>
         </CardHeader>
