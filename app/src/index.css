@@ -57,3 +57,44 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Theme-matched scrollbars: thin, transparent track, theme-tinted thumb */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.45);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* emerald accent on active scroll */
+  ::-webkit-scrollbar-thumb:active {
+    background: hsl(160 84% 45% / 0.6);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+}

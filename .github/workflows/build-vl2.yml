@@ -1,0 +1,33 @@
+name: Build whois vl2
+
+on:
+  push:
+    paths:
+      - "tribes2/gowWhoisVpn.cs"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-vl2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build gowWhoisVpn.vl2
+        run: |
+          mkdir -p build/scripts/autoexec
+          cp tribes2/gowWhoisVpn.cs build/scripts/autoexec/
+          cd build
+          zip -r "$GITHUB_WORKSPACE/gowWhoisVpn.vl2" scripts
+
+      - name: Upload to the rolling release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view whois-vl2 >/dev/null 2>&1 || \
+            gh release create whois-vl2 \
+              --title "Whois VL2 (latest)" \
+              --notes "Auto-built from tribes2/gowWhoisVpn.cs on every change. Drop into GameData/Classic/ and restart the server."
+          gh release upload whois-vl2 gowWhoisVpn.vl2 --clobber

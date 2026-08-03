@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   BookOpen,
+  Download,
   Code2,
   Globe,
   KeyRound,
@@ -57,6 +58,12 @@ export function HomePage() {
             <Logo height={40} />
           </Link>
           <nav className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/downloads">
+                <Download className="mr-1.5 h-4 w-4" />
+                Downloads
+              </Link>
+            </Button>
             <Button variant="ghost" size="sm" asChild>
               <a href="https://geekofwires.github.io/wilderzone-auxiliary/" target="_blank" rel="noreferrer">
                 <BookOpen className="mr-1.5 h-4 w-4" />
