@@ -15,14 +15,14 @@ export default function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route element={<Layout />}>
-        <Route path="/admin" element={<SourcesPage />} />
-        <Route path="/admin/setup" element={<SetupPage />} />
-        <Route path="/admin/entries" element={<EntriesPage />} />
-        <Route path="/admin/keys" element={<KeysPage />} />
-        <Route path="/admin/logs" element={<LogsPage />} />
-        <Route path="/admin/account" element={<AccountPage />} />
-        <Route path="/admin/users" element={<UsersPage />} />
+      <Route path="/admin" element={<Layout />}>
+        <Route index element={<SourcesPage />} />
+        <Route path="setup" element={<SetupPage />} />
+        <Route path="entries" element={<EntriesPage />} />
+        <Route path="keys" element={<KeysPage />} />
+        <Route path="logs" element={<LogsPage />} />
+        <Route path="account" element={<AccountPage />} />
+        <Route path="users" element={<UsersPage />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Route>
     </Routes>

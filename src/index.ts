@@ -792,12 +792,20 @@ app.get("/api/logs", async (c) => {
 // Admin panel assets + fallback
 // ===========================================================================
 
-app.get("/*", (c) => {
+app.get("/*", async (c) => {
   const path = new URL(c.req.url).pathname;
   if (path.startsWith("/api/") || path.startsWith("/tribes-api/")) {
     return jsonErr(c, "not found", 404);
   }
-  return c.env.ASSETS.fetch(c.req.raw);
+  const res = await c.env.ASSETS.fetch(c.req.raw);
+  // HTML must never be edge-cached: a stale index.html pins clients to old
+  // (possibly broken) bundles. Hashed assets under /assets/ stay cacheable.
+  if (res.headers.get("Content-Type")?.includes("text/html")) {
+    const out = new Response(res.body, res);
+    out.headers.set("Cache-Control", "no-store");
+    return out;
+  }
+  return res;
 });
 
 app.notFound((c) => jsonErr(c, "not found", 404));

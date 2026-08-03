@@ -53,7 +53,7 @@ export function Layout() {
     return <Navigate to="/" replace />;
   }
   // Forced password change: block all other navigation until done.
-  if (user.mustChangePassword && location.pathname !== "/account") {
+  if (user.mustChangePassword && location.pathname !== "/admin/account") {
     return <Navigate to="/admin/account" replace />;
   }
 
