@@ -9,7 +9,7 @@ export function Logo({ height = 40, className }: { height?: number; className?: 
   const width = Math.round(height * (1000 / 140));
   return (
     <svg
-      xmlns="http://www.w3.org"
+      xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1000 140"
       width={width}
       height={height}

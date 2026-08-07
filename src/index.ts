@@ -1,8 +1,9 @@
 // index.ts - tribes-proxy-check worker.
 //
-// /tribes-api/check  game-facing one-line TSV VPN verdicts (API key auth)
-// /api/*             JSON admin backend (session cookie, or admin Bearer key
-//                    for key-management routes)
+// /tribes-api/check   game-facing one-line TSV VPN verdicts (API key auth)
+// /tribes-api/health  unauthenticated one-line TSV liveness/readiness probe
+// /api/*              JSON admin backend (session cookie, or admin Bearer key
+//                     for key-management routes)
 // /admin/*           React admin panel (static assets)
 // cron               daily refresh of enabled CIDR sources
 
@@ -48,6 +49,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 const X4BNET_VPN_URL = "https://raw.githubusercontent.com/X4BNet/lists_vpn/main/output/vpn/ipv4.txt";
 const LOG_RETENTION_S = 48 * 60 * 60; // rolling 48h query log
+const SERVICE_VERSION = "1.0.0"; // reported by /tribes-api/health
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -276,6 +278,47 @@ app.get("/tribes-api/check", async (c) => {
     sanitizeField(info.as),
   ];
   return c.text(fields.join("\t"));
+});
+
+// ===========================================================================
+// Game-facing: /tribes-api/health
+//
+// Unauthenticated one-line TSV liveness/readiness probe, matching the
+// /tribes-api/check convention (single ASCII TSV line consumable with the QoL
+// patch HTTPObject + getField). Returns HTTP 200 with an OK line when the
+// worker, D1, and KV all respond, or 503 with ERR\t<reason> otherwise.
+// Deliberately not rate-limited and not behind an API key so load balancers
+// and monitors can poll it.
+//
+//   OK    1    1.0.0    2    142331    1783000000
+//   │     │    │        │    │        └ epoch seconds
+//   │     │    │        │    └ total enabled CIDR entries
+//   │     │    │        └ enabled source count
+//   │     │    └ version
+//   │     └ healthy (1/0; 0 never returned here - we 503 instead)
+//   └ status
+// ===========================================================================
+
+app.get("/tribes-api/health", async (c) => {
+  let sourceCount = 0;
+  let entryCount = 0;
+  try {
+    const row = await c.env.DB.prepare(
+      "SELECT COUNT(*) AS n, COALESCE(SUM(entry_count), 0) AS total FROM sources WHERE enabled = 1"
+    ).first<{ n: number; total: number }>();
+    sourceCount = row?.n ?? 0;
+    entryCount = row?.total ?? 0;
+  } catch (err) {
+    const reason = err instanceof Error ? "database-unavailable" : "database-error";
+    return c.text(`ERR\t${reason}`, 503);
+  }
+  try {
+    await c.env.LISTS.get("health:probe");
+  } catch {
+    return c.text("ERR\tkv-unavailable", 503);
+  }
+  const ts = Math.floor(Date.now() / 1000);
+  return c.text(["OK", "1", SERVICE_VERSION, String(sourceCount), String(entryCount), String(ts)].join("\t"));
 });
 
 // ===========================================================================

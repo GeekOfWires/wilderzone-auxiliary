@@ -82,6 +82,29 @@ X-Tribes-Key: tpc_...
 Accept: text/plain
 ```
 
+### Liveness/readiness: `GET /tribes-api/health`
+
+```
+GET /tribes-api/health
+```
+
+Unauthenticated one-line TSV probe in the same `/check` convention (no API key,
+no rate limit), so load balancers and monitors can poll it. Returns HTTP `200`
+when the worker, D1, and KV all respond, or `503` with `ERR\t<reason>` otherwise:
+
+```
+OK	1	1.0.0	2	142331	1783000000
+```
+
+| idx | field | notes |
+|---|---|---|
+| 0 | status | `OK` / `ERR` |
+| 1 | healthy | always `1` here (failure returns 503 instead) |
+| 2 | version | service version |
+| 3 | sources | enabled CIDR source count |
+| 4 | entries | total enabled CIDR entries |
+| 5 | ts | epoch seconds |
+
 Response: one line, `text/plain`, **tab-separated**:
 
 ```

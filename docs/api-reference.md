@@ -71,6 +71,43 @@ function WhoisVpnHttp::onLine(%this, %line) {
 
 ---
 
+## Liveness/readiness: `/tribes-api/health`
+
+Unauthenticated one-line TSV probe in the same `/check` convention, so load
+balancers and monitors can poll it without an API key or rate limit.
+
+```
+GET /tribes-api/health
+```
+
+### Response
+
+On success the worker, D1, and KV all confirmed reachable. `text/plain`, one
+line, tab-separated, ASCII only:
+
+```
+OK	1	1.0.0	2	142331	1783000000
+```
+
+| idx | field | notes |
+|---|---|---|
+| 0 | status | `OK` / `ERR` |
+| 1 | healthy | always `1` here (failure returns 503 instead) |
+| 2 | version | service version |
+| 3 | sources | enabled CIDR source count |
+| 4 | entries | total enabled CIDR entries |
+| 5 | ts | epoch seconds |
+
+### Errors
+
+| response | status | meaning |
+|---|---|---|
+| `ERR	database-unavailable` | 503 | D1 did not respond |
+| `ERR	database-error` | 503 | D1 query failed |
+| `ERR	kv-unavailable` | 503 | KV did not respond |
+
+---
+
 ## Admin backend: `/api/*`
 
 All responses JSON. Session cookie auth from `auth/login`; the key-management
