@@ -1,11 +1,13 @@
 import {
   KeyRound,
+  KeySquare,
   ListFilter,
   Loader2,
   LogOut,
   ScrollText,
   ShieldCheck,
   User,
+  UserSearch,
   Users,
 } from "lucide-react";
 import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
@@ -24,15 +26,19 @@ interface NavItem {
   end: boolean;
   /** roles that see this entry */
   roles: Role[];
+  /** render a separating rule below this entry */
+  separatorAfter?: boolean;
 }
 
 const ALL: Role[] = ["root", "admin", "standard"];
 const ADMINS: Role[] = ["root", "admin"];
 
 const NAV: NavItem[] = [
+  { to: "/admin/players", label: "Player Lookup", icon: UserSearch, end: false, roles: ADMINS, separatorAfter: true },
   { to: "/admin", label: "Sources", icon: ListFilter, end: true, roles: ALL },
   { to: "/admin/entries", label: "Entries", icon: ScrollText, end: false, roles: ALL },
   { to: "/admin/keys", label: "Whois API Keys", icon: KeyRound, end: false, roles: ALL },
+  { to: "/admin/wza-keys", label: "WZA API Keys", icon: KeySquare, end: false, roles: ADMINS },
   { to: "/admin/logs", label: "Query Log", icon: ShieldCheck, end: false, roles: ADMINS },
   { to: "/admin/users", label: "Users", icon: Users, end: false, roles: ["root"] },
   { to: "/admin/account", label: "Account", icon: User, end: false, roles: ALL },
@@ -79,23 +85,25 @@ export function Layout() {
         </div>
         <nav className="flex-1 space-y-1 p-2">
           {NAV.filter((item) => item.roles.includes(user.role)).map(
-            ({ to, label, icon: Icon, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                  )
-                }
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </NavLink>
+            ({ to, label, icon: Icon, end, separatorAfter }) => (
+              <div key={to}>
+                <NavLink
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                    )
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </NavLink>
+                {separatorAfter && <div className="mx-2 my-2 border-t" />}
+              </div>
             )
           )}
         </nav>

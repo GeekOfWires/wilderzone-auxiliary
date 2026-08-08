@@ -30,6 +30,9 @@ export interface Env {
   ASSETS: Fetcher;
   ROOT_PASSWORD?: string;
   SESSION_SECRET?: string;
+  // TribesNEXT service account for /tribes-api/tag upstream lookups (secrets)
+  TN_USERNAME?: string;
+  TN_PASSWORD?: string;
 }
 
 interface ApiKeyRow {
@@ -37,6 +40,20 @@ interface ApiKeyRow {
   key: string;
   name: string;
   role: string;
+  rate_limit: number | null;
+  rate_window_s: number;
+  created_by: string | null;
+  created_at: string;
+  revoked_at: string | null;
+  last_used_at: string | null;
+}
+
+// WZA API keys live in their own table (no role model); they authenticate
+// game servers against generic WZA API functions (/tribes-api/tag, ...).
+interface WzaKeyRow {
+  id: number;
+  key: string;
+  name: string;
   rate_limit: number | null;
   rate_window_s: number;
   created_by: string | null;
@@ -319,6 +336,154 @@ app.get("/tribes-api/health", async (c) => {
   }
   const ts = Math.floor(Date.now() / 1000);
   return c.text(["OK", "1", SERVICE_VERSION, String(sourceCount), String(entryCount), String(ts)].join("\t"));
+});
+
+// ===========================================================================
+// Game-facing: /tribes-api/tag
+// ===========================================================================
+
+// Clan-tag lookup for game servers. The worker holds a TribesNEXT service
+// account (TN_USERNAME/TN_PASSWORD secrets, never in the repo) and reads
+// public profiles via the published community JSON API; game servers need no
+// TribesNEXT account of their own. Response is one TSV line:
+//   OK \t name \t tag \t append    (append: 0 = prepend, 1 = postpend; empty tag = no clan)
+//   ERR \t invalid-guid / bad-key / rate-limited / not-found / upstream
+
+const TN_BASE = "https://tribesnext.thyth.com";
+const TN_SESSION_MAX_AGE_MS = 10 * 60 * 1000;
+const TAG_CACHE_OK_S = 300;
+const TAG_CACHE_ERR_S = 60;
+
+interface TnSession {
+  uuid: string;
+  guid: string;
+  at: number;
+}
+
+// per-isolate session cache; serialized login
+let tnSession: TnSession | null = null;
+let tnLoginInFlight: Promise<TnSession | null> | null = null;
+
+async function tnLogin(env: Env): Promise<TnSession | null> {
+  if (!env.TN_USERNAME || !env.TN_PASSWORD) return null;
+  const q = new URLSearchParams({ method: "login", un: env.TN_USERNAME, pw: env.TN_PASSWORD });
+  try {
+    const resp = await fetch(`${TN_BASE}/tn/json/json_session.php?${q}`);
+    if (!resp.ok) return null;
+    const data = (await resp.json()) as { status?: string; uuid?: string; guid?: string };
+    if (data.status !== "success" || !data.uuid || !data.guid) return null;
+    tnSession = { uuid: data.uuid, guid: data.guid, at: Date.now() };
+    return tnSession;
+  } catch {
+    return null;
+  }
+}
+
+async function tnGetSession(env: Env): Promise<TnSession | null> {
+  if (tnSession && Date.now() - tnSession.at < TN_SESSION_MAX_AGE_MS) return tnSession;
+  tnSession = null;
+  if (!tnLoginInFlight) {
+    tnLoginInFlight = tnLogin(env).finally(() => {
+      tnLoginInFlight = null;
+    });
+  }
+  return tnLoginInFlight;
+}
+
+async function tnUserView(
+  session: TnSession,
+  guid: string
+): Promise<{ status: number; body: string }> {
+  const payload = encodeURIComponent(JSON.stringify({ id: guid }));
+  const url =
+    `${TN_BASE}/tn/json/json_browser.php?guid=${session.guid}` +
+    `&uuid=${session.uuid}&method=userview&payload=${payload}`;
+  const resp = await fetch(url);
+  return { status: resp.status, body: await resp.text() };
+}
+
+async function tnUserSearch(
+  session: TnSession,
+  q: string
+): Promise<{ status: number; body: string }> {
+  const payload = encodeURIComponent(JSON.stringify({ q }));
+  const url =
+    `${TN_BASE}/tn/json/json_browser.php?guid=${session.guid}` +
+    `&uuid=${session.uuid}&method=usersearch&payload=${payload}`;
+  const resp = await fetch(url);
+  return { status: resp.status, body: await resp.text() };
+}
+
+app.get("/tribes-api/tag", async (c) => {
+  const guid = (c.req.query("guid") ?? "").trim();
+  if (!/^\d+$/.test(guid)) return c.text("ERR\tinvalid-guid", 400);
+
+  const keyHeader = c.req.header("X-Tribes-Key") ?? "";
+  const wzaKey = await c.env.DB.prepare("SELECT * FROM wza_api_keys WHERE key = ? AND revoked_at IS NULL")
+    .bind(keyHeader)
+    .first<WzaKeyRow>();
+  if (!wzaKey) return c.text("ERR\tbad-key", 401);
+
+  const clientIp = c.req.header("CF-Connecting-IP") ?? "unknown";
+  // rate-limit per calling server IP (like the whois public key): the default
+  // generic key is shared by many servers, and one busy server must not be
+  // able to drain the bucket for everyone else
+  const rl = await checkRateLimit(c.env.LISTS, { ...wzaKey, role: "public" } as ApiKeyRow, clientIp);
+  if (!rl.ok) {
+    return c.text("ERR\trate-limited", 429, { "Retry-After": String(rl.retryAfter ?? 60) });
+  }
+
+  c.executionCtx.waitUntil(
+    c.env.DB.prepare("UPDATE wza_api_keys SET last_used_at = datetime('now') WHERE id = ?").bind(wzaKey.id).run()
+  );
+
+  const cacheKey = `tag:${guid}`;
+  const cached = await c.env.LISTS.get(cacheKey);
+  if (cached !== null) return c.text(cached);
+
+  let session = await tnGetSession(c.env);
+  if (!session) return c.text("ERR\tupstream-auth", 502);
+
+  let result: string;
+  try {
+    let { status, body } = await tnUserView(session, guid);
+    if (status === 401) {
+      // session expired upstream: force one re-login and retry once
+      tnSession = null;
+      session = await tnGetSession(c.env);
+      if (!session) return c.text("ERR\tupstream-auth", 502);
+      ({ status, body } = await tnUserView(session, guid));
+    }
+    if (status !== 200) {
+      result = "ERR\tupstream";
+    } else {
+      const data = JSON.parse(body) as {
+        status?: string;
+        name?: string | null;
+        tag?: string | null;
+        append?: number | null;
+      };
+      if (data.status === "error") {
+        result = "ERR\tnot-found";
+      } else {
+        // NB: the community DB's "append" semantics are inverted relative to
+        // the game's authinfo field (0 = prepend, 1 = postpend) - flip it so
+        // servers can use the value verbatim
+        result =
+          `OK\t${sanitizeField(data.name ?? "")}` +
+          `\t${sanitizeField(data.tag ?? "")}\t${data.append ? "0" : "1"}`;
+      }
+    }
+  } catch {
+    result = "ERR\tupstream";
+  }
+
+  c.executionCtx.waitUntil(
+    c.env.LISTS.put(cacheKey, result, {
+      expirationTtl: result.startsWith("OK") ? TAG_CACHE_OK_S : TAG_CACHE_ERR_S,
+    })
+  );
+  return c.text(result);
 });
 
 // ===========================================================================
@@ -630,6 +795,76 @@ app.delete("/api/keys/:id", async (c) => {
   return c.json({ ok: true });
 });
 
+// ---- WZA API keys (generic WZA API functions, e.g. /tribes-api/tag) ----
+// Separate table from the whois/VPN keys by design. Admin/root only.
+
+app.get("/api/wza-keys", async (c) => {
+  const denied = await requireAdminRole(c);
+  if (denied) return denied;
+  const rows = await c.env.DB.prepare(
+    "SELECT id, key, name, rate_limit, rate_window_s, created_by, created_at, revoked_at, last_used_at FROM wza_api_keys WHERE revoked_at IS NULL ORDER BY id"
+  ).all<WzaKeyRow>();
+  return c.json({ keys: rows.results });
+});
+
+app.post("/api/wza-keys", async (c) => {
+  const denied = await requireAdminRole(c);
+  if (denied) return denied;
+
+  let body: { name?: string; rateLimit?: number | null; rateWindowS?: number };
+  try {
+    body = await c.req.json();
+  } catch {
+    return jsonErr(c, "invalid json");
+  }
+  if (!body.name) return jsonErr(c, "name required");
+
+  const key = generateApiKey();
+  const session = await getSession(c);
+  await c.env.DB.prepare(
+    "INSERT INTO wza_api_keys (key, name, rate_limit, rate_window_s, created_by) VALUES (?, ?, ?, ?, ?)"
+  )
+    .bind(key, body.name, body.rateLimit ?? null, body.rateWindowS ?? 3600, session?.sub ?? "admin-key")
+    .run();
+  // the full key is returned exactly once, here
+  return c.json({ ok: true, key, name: body.name });
+});
+
+app.put("/api/wza-keys/:id", async (c) => {
+  const denied = await requireAdminRole(c);
+  if (denied) return denied;
+
+  const id = Number(c.req.param("id"));
+  let body: { name?: string; rateLimit?: number | null; rateWindowS?: number };
+  try {
+    body = await c.req.json();
+  } catch {
+    return jsonErr(c, "invalid json");
+  }
+
+  await c.env.DB.prepare(
+    "UPDATE wza_api_keys SET name = COALESCE(?, name), rate_window_s = COALESCE(?, rate_window_s) WHERE id = ?"
+  )
+    .bind(body.name ?? null, body.rateWindowS ?? null, id)
+    .run();
+  // rate_limit is only touched when explicitly present (null clears it)
+  if (body.rateLimit !== undefined) {
+    await c.env.DB.prepare("UPDATE wza_api_keys SET rate_limit = ? WHERE id = ?")
+      .bind(body.rateLimit, id)
+      .run();
+  }
+  return c.json({ ok: true });
+});
+
+app.delete("/api/wza-keys/:id", async (c) => {
+  const denied = await requireAdminRole(c);
+  if (denied) return denied;
+
+  const id = Number(c.req.param("id"));
+  await c.env.DB.prepare("UPDATE wza_api_keys SET revoked_at = datetime('now') WHERE id = ?").bind(id).run();
+  return c.json({ ok: true });
+});
+
 // ---- user management (root only) ----
 
 app.get("/api/users", async (c) => {
@@ -829,6 +1064,58 @@ app.get("/api/logs", async (c) => {
     .all();
 
   return c.json({ total: total?.n ?? 0, offset, limit, rows: rows.results });
+});
+
+// ---- player lookup (TribesNEXT usersearch passthrough) ----
+
+// Admin-panel player search against the live TribesNEXT community database.
+// The worker's service account does the upstream call (same session machinery
+// as /tribes-api/tag); panel users need no TribesNEXT account of their own.
+app.get("/api/players", async (c) => {
+  const denied = await requireAdminRole(c);
+  if (denied) return denied;
+
+  const q = (c.req.query("q") ?? "").trim();
+  if (!q) return jsonErr(c, "missing q", 400);
+  if (q.length > 64) return jsonErr(c, "q too long", 400);
+
+  let session = await tnGetSession(c.env);
+  if (!session) return jsonErr(c, "upstream-auth", 502);
+
+  let status: number, body: string;
+  try {
+    ({ status, body } = await tnUserSearch(session, q));
+    if (status === 401) {
+      // session expired upstream: force one re-login and retry once
+      tnSession = null;
+      session = await tnGetSession(c.env);
+      if (!session) return jsonErr(c, "upstream-auth", 502);
+      ({ status, body } = await tnUserSearch(session, q));
+    }
+  } catch {
+    return jsonErr(c, "upstream", 502);
+  }
+  if (status !== 200) return jsonErr(c, "upstream", 502);
+
+  let rows: { guid?: string; name?: string | null; tag?: string | null; append?: number | null }[];
+  try {
+    const data = JSON.parse(body) as unknown;
+    if (!Array.isArray(data)) return jsonErr(c, "upstream", 502);
+    rows = data;
+  } catch {
+    return jsonErr(c, "upstream", 502);
+  }
+
+  // Same append flip as /tribes-api/tag: the community DB's semantics are
+  // inverted relative to the game's authinfo field, so report what a game
+  // server would apply (0 = prepend, 1 = postpend).
+  const players = rows.map((r) => ({
+    guid: r.guid ?? "",
+    name: r.name ?? "",
+    tag: r.tag ?? "",
+    append: r.append ? 0 : 1,
+  }));
+  return c.json({ q, players });
 });
 
 // ===========================================================================

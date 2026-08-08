@@ -34,6 +34,18 @@ export interface ApiKey {
   last_used_at: string | null;
 }
 
+export interface WzaKey {
+  id: number;
+  key: string;
+  name: string;
+  rate_limit: number | null;
+  rate_window_s: number | null;
+  created_by: string;
+  created_at: string;
+  revoked_at: string | null;
+  last_used_at: string | null;
+}
+
 export interface LogRow {
   id: number;
   ts: string; // "YYYY-MM-DD HH:MM:SS" UTC
@@ -44,6 +56,13 @@ export interface LogRow {
   ip: string | null;
   geo: string | null;
   isp: string | null;
+}
+
+export interface PlayerResult {
+  guid: string;
+  name: string;
+  tag: string; // empty = no clan
+  append: number; // game convention: 0 = prepend, 1 = postpend
 }
 
 export interface SetupStatus {
