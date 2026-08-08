@@ -53,11 +53,54 @@ export function DownloadsPage() {
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
         <h1 className="mb-2 text-3xl font-bold tracking-tight">Downloads</h1>
         <p className="mb-8 text-muted-foreground">
-          Server-side scripts for your Tribes 2 server, built automatically from the repository on
+          Client and server scripts for Tribes 2, built automatically from the repository on
           every change.
         </p>
 
         <Card className="border-l-4 border-l-emerald-400 bg-card/60">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileArchive className="h-5 w-5 text-emerald-400" />
+              Wilderzone Clans
+            </CardTitle>
+            <CardDescription>
+              In-game clan tags, clan browser, and T-Mail against the live TribesNEXT community
+              APIs. The client vl2s add the browser and T-Mail UIs; the server vl2 shows clan tags
+              on the scoreboard for all players. Drop into{" "}
+              <code className="text-teal-500">GameData/base/</code>.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <Button asChild>
+                <a href={CLANS_VL2_URLS.clientQol}>
+                  <Download className="mr-1.5 h-4 w-4" />
+                  Client (QoL)
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href={CLANS_VL2_URLS.clientRc}>
+                  <Download className="mr-1.5 h-4 w-4" />
+                  Client (RC2a)
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href={CLANS_VL2_URLS.server}>
+                  <Download className="mr-1.5 h-4 w-4" />
+                  Server (QoL)
+                </a>
+              </Button>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Pick the client vl2 for your patch generation: QoL patch (native crypto + HTTPS) or
+              RC2a (Ruby bridge, plain HTTP). Servers need only the server vl2 - tags come from the
+              Wilderzone Auxiliary tag API, no TribesNEXT account required.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6 border-l-4 border-l-emerald-400 bg-card/60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileArchive className="h-5 w-5 text-emerald-400" />
@@ -101,49 +144,6 @@ export function DownloadsPage() {
               Super admins get <code className="text-teal-500">/whois &lt;name&gt;</code> in chat
               and a <span className="text-foreground">Whois Lookup</span> entry in the player
               right-click menu, with smurf detection using TacoClassic's own process.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="mt-6 border-l-4 border-l-emerald-400 bg-card/60">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileArchive className="h-5 w-5 text-emerald-400" />
-              Wilderzone Clans
-            </CardTitle>
-            <CardDescription>
-              In-game clan tags, clan browser, and T-Mail against the live TribesNEXT community
-              APIs. The server vl2 shows clan tags on the scoreboard for all players; the client
-              vl2s add the browser and T-Mail UIs. Drop into{" "}
-              <code className="text-teal-500">GameData/base/</code>.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <Button asChild>
-                <a href={CLANS_VL2_URLS.server}>
-                  <Download className="mr-1.5 h-4 w-4" />
-                  Server (QoL)
-                </a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href={CLANS_VL2_URLS.clientQol}>
-                  <Download className="mr-1.5 h-4 w-4" />
-                  Client (QoL)
-                </a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href={CLANS_VL2_URLS.clientRc}>
-                  <Download className="mr-1.5 h-4 w-4" />
-                  Client (RC2a)
-                </a>
-              </Button>
-            </div>
-
-            <p className="text-xs text-muted-foreground">
-              Pick the client vl2 for your patch generation: QoL patch (native crypto + HTTPS) or
-              RC2a (Ruby bridge, plain HTTP). Servers need only the server vl2 - tags come from the
-              Wilderzone Auxiliary tag API, no TribesNEXT account required.
             </p>
           </CardContent>
         </Card>

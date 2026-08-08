@@ -53,6 +53,11 @@
   * {
     @apply border-border;
   }
+  html {
+    /* always reserve the vertical scrollbar gutter so page content
+       doesn't shift horizontally when a page becomes scrollable */
+    overflow-y: scroll;
+  }
   body {
     @apply bg-background text-foreground;
   }

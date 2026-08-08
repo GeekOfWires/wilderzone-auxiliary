@@ -1,38 +1,58 @@
 import { Link } from "react-router-dom";
-import { BookOpen, Code2, Download, FlaskConical, Globe, Network, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BookOpen, Code2, Download, FlaskConical, Globe, Network, Sparkles, Users } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export function HomePage() {
+  // Large borderless header at the very top; shrinks the moment the page scrolls.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 0);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur">
+        <div
+          className={cn(
+            "mx-auto flex w-full max-w-6xl items-center justify-between px-4 transition-all duration-300",
+            scrolled ? "h-16" : "h-32"
+          )}
+        >
           <Link to="/" aria-label="Home">
-            <Logo height={72} />
+            {/* attribute height is the no-CSS fallback; the classes drive the animated size */}
+            <Logo
+              height={96}
+              className={cn("w-auto transition-all duration-300", scrolled ? "h-12" : "h-24")}
+            />
           </Link>
           <nav className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size={scrolled ? "sm" : "default"} asChild>
               <Link to="/downloads">
                 <Download className="mr-1.5 h-4 w-4" />
                 Downloads
               </Link>
             </Button>
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size={scrolled ? "sm" : "default"} asChild>
               <a href="https://geekofwires.github.io/wilderzone-auxiliary/" target="_blank" rel="noreferrer">
                 <BookOpen className="mr-1.5 h-4 w-4" />
                 Docs
               </a>
             </Button>
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size={scrolled ? "sm" : "default"} asChild>
               <a href="https://github.com/GeekOfWires/wilderzone-auxiliary" target="_blank" rel="noreferrer">
                 <Code2 className="mr-1.5 h-4 w-4" />
                 GitHub
               </a>
             </Button>
-            <Button size="sm" asChild className="ml-2">
+            <Button size={scrolled ? "sm" : "default"} asChild className="ml-2">
               <Link to="/login">Login</Link>
             </Button>
           </nav>
@@ -42,8 +62,7 @@ export function HomePage() {
       <main className="flex-1">
         {/* Hero */}
         <section className="border-b">
-          <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-4 py-20 text-center">
-            <Logo height={120} />
+          <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-4 pb-20 pt-10 text-center">
             <div className="space-y-4">
               <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
                 What if a game server could ask the outside world questions?
@@ -107,6 +126,46 @@ export function HomePage() {
                 becomes another auxiliary function hanging off the same bridge.
               </CardContent>
             </Card>
+          </div>
+        </section>
+
+        {/* Clans passthrough */}
+        <section className="border-t">
+          <div className="mx-auto flex w-full max-w-4xl flex-col items-start gap-4 px-4 py-16">
+            <div className="flex items-center gap-2 text-sm font-medium text-emerald-400">
+              <Users className="h-4 w-4" />
+              Now interfacing
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight">Clan Tags, Proxied</h2>
+            <p className="max-w-2xl text-muted-foreground">
+              Clan tags on a 2001 engine, with a security model that holds up: each game server
+              authenticates to Wilderzone Auxiliary with its own revocable API key, and the
+              service proxies the lookup to the live TribesNEXT community database. The worker
+              holds the only community account - server operators never need TribesNEXT
+              credentials, players never send a password anywhere, and every answer is cached
+              and rate-limited per server. One line comes back: the player's community name,
+              their tag, and where the tag goes.
+            </p>
+            <p className="max-w-2xl text-muted-foreground">
+              Pair it with the Wilderzone Clans server vl2 and every player - modded client or
+              not - shows up on the scoreboard wearing their community tag, with local overrides
+              for tournament rosters and staff. The client vl2s build on the same community
+              session to bring back the in-game clan browser and T-Mail.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/downloads">Get the clans vl2s</Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a
+                  href="https://geekofwires.github.io/wilderzone-auxiliary/api-reference"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  API reference
+                </a>
+              </Button>
+            </div>
           </div>
         </section>
 

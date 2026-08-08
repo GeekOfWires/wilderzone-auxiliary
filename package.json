@@ -9,10 +9,11 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "npm run build:app && wrangler deploy",
+    "build": "npm --prefix app install && npm run build:app",
     "build:app": "npm --prefix app run build",
     "typecheck": "tsc --noEmit",
-    "db:migrate:local": "wrangler d1 execute wilderzone-aux-db --local --file=migrations/0001_init.sql",
-    "db:migrate": "wrangler d1 execute wilderzone-aux-db --remote --file=migrations/0001_init.sql"
+    "db:migrate:local": "for f in migrations/*.sql; do wrangler d1 execute wilderzone-aux-db --local --file=\"$f\"; done",
+    "db:migrate": "for f in migrations/*.sql; do wrangler d1 execute wilderzone-aux-db --remote --file=\"$f\"; done"
   },
   "dependencies": {
     "hono": "^4.6.14"
@@ -20,6 +21,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241230.0",
     "typescript": "^5.7.2",
-    "wrangler": "^3.99.0"
+    "wrangler": "^3.114.17"
   }
 }
