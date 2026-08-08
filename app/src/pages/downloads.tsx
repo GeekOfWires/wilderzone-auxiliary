@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
-import { BookOpen, Code2, Download, FileArchive, TerminalSquare } from "lucide-react";
-import { Logo } from "@/components/Logo";
+import { Download, FileArchive, TerminalSquare } from "lucide-react";
+import { PublicHeader } from "@/components/public-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -19,36 +18,7 @@ const RELEASES_URL = "https://github.com/GeekOfWires/wilderzone-auxiliary/releas
 export function DownloadsPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4">
-          <Link to="/" aria-label="Home">
-            <Logo height={72} />
-          </Link>
-          <nav className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/downloads">
-                <Download className="mr-1.5 h-4 w-4" />
-                Downloads
-              </Link>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <a href="https://geekofwires.github.io/wilderzone-auxiliary/" target="_blank" rel="noreferrer">
-                <BookOpen className="mr-1.5 h-4 w-4" />
-                Docs
-              </a>
-            </Button>
-            <Button variant="ghost" size="sm" asChild>
-              <a href="https://github.com/GeekOfWires/wilderzone-auxiliary" target="_blank" rel="noreferrer">
-                <Code2 className="mr-1.5 h-4 w-4" />
-                GitHub
-              </a>
-            </Button>
-            <Button size="sm" asChild className="ml-2">
-              <Link to="/login">Login</Link>
-            </Button>
-          </nav>
-        </div>
-      </header>
+      <PublicHeader />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
         <h1 className="mb-2 text-3xl font-bold tracking-tight">Downloads</h1>
@@ -78,7 +48,7 @@ export function DownloadsPage() {
                   Client (QoL)
                 </a>
               </Button>
-              <Button variant="outline" asChild>
+              <Button asChild>
                 <a href={CLANS_VL2_URLS.clientRc}>
                   <Download className="mr-1.5 h-4 w-4" />
                   Client (RC2a)
