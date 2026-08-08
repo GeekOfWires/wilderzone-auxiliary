@@ -72,6 +72,19 @@ $Host::WhoisVpnWorkerKey = "tpc_<your server-role key>";
 $Host::AutoKickVPNs = 1;   // optional: auto-kick flagged players on connect
 ```
 
+## Game-side scripts (`tribes2/`)
+
+The `tribes2/` folder holds the Tribes 2 script projects that pair with this
+service:
+
+- `tribes2/gowWhoisVpn/` — the whois/VPN-kick server plugin described above.
+- `tribes2/wilderzoneClans/` — the Wilderzone Clans suite (in-game clan tags,
+  clan browser, T-Mail against the live TribesNEXT APIs); see its own README.
+
+GitHub Actions rebuilds the `.vl2` archives on every change under `tribes2/`
+and publishes them to rolling releases (`whois-vl2`, `clans-vl2`), linked from
+the panel's **Downloads** page.
+
 ## API
 
 ### Game-facing: `GET /tribes-api/check`

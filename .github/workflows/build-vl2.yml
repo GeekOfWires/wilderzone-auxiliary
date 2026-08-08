@@ -1,9 +1,9 @@
-name: Build whois vl2
+name: Build Tribes 2 vl2s
 
 on:
   push:
     paths:
-      - "tribes2/gowWhoisVpn.cs"
+      - "tribes2/**"
   workflow_dispatch:
 
 permissions:
@@ -18,16 +18,35 @@ jobs:
       - name: Build gowWhoisVpn.vl2
         run: |
           mkdir -p build/scripts/autoexec
-          cp tribes2/gowWhoisVpn.cs build/scripts/autoexec/
+          cp tribes2/gowWhoisVpn/gowWhoisVpn.cs build/scripts/autoexec/
           cd build
           zip -r "$GITHUB_WORKSPACE/gowWhoisVpn.vl2" scripts
 
-      - name: Upload to the rolling release
+      - name: Build wilderzoneClan vl2s
+        run: |
+          python3 tribes2/wilderzoneClans/build-vl2.py
+          cp tribes2/wilderzoneClans/dist/*.vl2 "$GITHUB_WORKSPACE/"
+
+      - name: Upload whois vl2 to the rolling release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view whois-vl2 >/dev/null 2>&1 || \
             gh release create whois-vl2 \
               --title "Whois VL2 (latest)" \
-              --notes "Auto-built from tribes2/gowWhoisVpn.cs on every change. Drop into GameData/Classic/ and restart the server."
+              --notes "Auto-built from tribes2/gowWhoisVpn/gowWhoisVpn.cs on every change. Drop into GameData/Classic/ and restart the server."
           gh release upload whois-vl2 gowWhoisVpn.vl2 --clobber
+
+      - name: Upload clan vl2s to the rolling release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view clans-vl2 >/dev/null 2>&1 || \
+            gh release create clans-vl2 \
+              --title "Wilderzone Clans VL2s (latest)" \
+              --notes "Auto-built from tribes2/wilderzoneClans/ on every change. Server vl2 goes in GameData/base/ on the server; client vl2s (QoL or RC2a flavor) go in GameData/base/ per player."
+          gh release upload clans-vl2 \
+            wilderzoneClanQOL-server.vl2 \
+            wilderzoneClanQOL-client.vl2 \
+            wilderzoneClanRC-client.vl2 \
+            --clobber
